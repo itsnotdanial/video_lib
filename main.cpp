@@ -1,8 +1,6 @@
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <string>
-#include <algorithm>
 #include "funcs.h"
 #include <chrono>
 
@@ -15,6 +13,8 @@ int main(int argc, char *argv[]) {
             std::cout << argv[3] << std::endl; 
             if (argv[3] == std::string("reverse")) {
                 funcs.reverse();
+            } else if (argv[3] == std::string("grayscale")) {
+                funcs.grayscale();    
             } else {
                 std::cerr << "Invalid argument" << std::endl;
                 return 1;
@@ -22,27 +22,54 @@ int main(int argc, char *argv[]) {
             break;
 
         case 5: // if 5 args it must be reverse with mode
-            if (argv[3][0] == 'M') {
-                // call reverse in memory mode       
-            } else if (argv[3][0] == 'S') {
+            std::cout << argv[3] << std::endl;
+            if (argv[3] == std::string("-M") && argv[4] == std::string("reverse")) {
+                // call reverse in memory mode
+                std::cout << "REVERSE MEMORY" << std::endl;
+                funcs.reverse_memory();       
+            } else if (argv[3][0] == 'S' && argv[4] == std::string("reverse")) {
                 // call reverse in speed mode     
-            } else {
-                std::cerr << "Invalid argument" << std::endl;
-                return 1;
+            } else if(argv[3][0] == 'M' && argv[4] == std::string("grayscale")) {
+                funcs.grayscale_memory();
+                
             }
-            break;
-
-        case 6: // if 6 args it must be swap_channel, clip_channel or scale_channel
-            if (argv[3] == std::string("swap_channel")) {
-                try {
-                    int channel1 = std::stoi(argv[4]);
-                    int channel2 = std::stoi(argv[5]);
-
+            else if(argv[3][0] == 'S' && argv[4] == std::string("grayscale")) {
+                funcs.grayscale_memory();
+            } else if(argv[3] == std::string("swap_channel")) {
+                try{
+                    int channel1 = argv[4][0] - '0';
+                    int channel2 = argv[4][2] - '0';
                     if (channel1 > channel2) {
                         funcs.swap_channel(channel1, channel2);
                     } else {
                         funcs.swap_channel(channel2, channel1); // add arguments idk 
                     }
+                } catch (const std::exception& e) {
+                    std::cerr << e.what() << '\n';
+                    return 1;
+                }
+            }
+            break;
+
+        case 6: // if 6 args it must be swap_channel, clip_channel or scale_channel
+            if (argv[4] == std::string("swap_channel")){
+                try {
+                    int channel1 = std::stoi(argv[5]);
+                    int channel2 = std::stoi(argv[6]);
+                    
+                    if (channel1 < channel2){
+                        int temp = channel1;
+                        channel1 = channel2;
+                        channel2 = temp;
+                    }
+
+                    if (argv[3][0] == 'M') {
+                        // call memory swap
+                        } else {
+                        // call fast swap
+
+                    }
+                    break;
                 } catch (const std::exception& e) {
                     std::cerr << e.what() << '\n';
                     return 1;
@@ -94,29 +121,7 @@ int main(int argc, char *argv[]) {
 
         case 7:
             // handle case 6 if needed
-            if (argv[4] == std::string("swap_channel")){
-                try {
-                    int channel1 = std::stoi(argv[5]);
-                    int channel2 = std::stoi(argv[6]);
-                    
-                    if (channel1 < channel2){
-                        int temp = channel1;
-                        channel1 = channel2;
-                        channel2 = temp;
-                    }
-
-                    if (argv[3][0] == 'M') {
-                        // call memory swap
-                        } else {
-                        // call fast swap
-
-                    }
-                    break;
-                } catch (const std::exception& e) {
-                    std::cerr << e.what() << '\n';
-                    return 1;
-                }
-            } else if (argv[4] == std::string("clip_channel")) {
+            if (argv[4] == std::string("clip_channel")) {
                 try {
                     int channel = std::stoi(argv[5]);
                     bool comma = false;

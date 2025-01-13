@@ -5,11 +5,12 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <cstdint>
 
 // Class definition
 class Funcs {
 private:
-    long frame_no;
+    std::int64_t frame_no;
     unsigned char width;
     unsigned char height;
     unsigned char channels;
@@ -28,9 +29,9 @@ private:
     int channel_size;
 
     int chunk_size; // define in file
-    int file_size;
+    std::int64_t file_size;
     int remainder_bytes; // define in file
-    int file_pos; // define in file
+    std::int64_t file_pos; // define in file
 
     std::vector<char> data;
 

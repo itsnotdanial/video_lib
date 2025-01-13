@@ -7,10 +7,8 @@
 int main(int argc, char *argv[]) {
     auto start = std::chrono::high_resolution_clock::now();
     Funcs funcs(argv[1], argv[2]);
-    std::cout << " ARGC "<< argc << std::endl;
     switch (argc) {
         case 4: // if only 4 args it must be reverse
-            std::cout << argv[3] << std::endl; 
             if (argv[3] == std::string("reverse")) {
                 funcs.reverse();
             } else if (argv[3] == std::string("grayscale")) {
@@ -21,53 +19,57 @@ int main(int argc, char *argv[]) {
             }
             break;
 
-        case 5: // if 5 args it must be reverse with mode
-            std::cout << argv[3] << std::endl;
+        case 5: // if 5 args it must be reverse or grayscale with a mode or swap_channel
             if (argv[3] == std::string("-M") && argv[4] == std::string("reverse")) {
                 // call reverse in memory mode
-                std::cout << "REVERSE MEMORY" << std::endl;
                 funcs.reverse_memory();       
-            } else if (argv[3][0] == 'S' && argv[4] == std::string("reverse")) {
-                // call reverse in speed mode     
-            } else if(argv[3][0] == 'M' && argv[4] == std::string("grayscale")) {
+            } else if (argv[3] == std::string("-S") && argv[4] == std::string("reverse")) {
+                funcs.reverse_speed();     
+            } else if(argv[3] == std::string("-M") && argv[4] == std::string("grayscale")) {
                 funcs.grayscale_memory();
                 
             }
-            else if(argv[3][0] == 'S' && argv[4] == std::string("grayscale")) {
+            else if(argv[3] == std::string("-S") && argv[4] == std::string("grayscale")) {
                 funcs.grayscale_memory();
             } else if(argv[3] == std::string("swap_channel")) {
                 try{
                     int channel1 = argv[4][0] - '0';
                     int channel2 = argv[4][2] - '0';
-                    if (channel1 > channel2) {
-                        funcs.swap_channel(channel1, channel2);
-                    } else {
-                        funcs.swap_channel(channel2, channel1); // add arguments idk 
+                    if(channel1 < channel2){
+                        int temp = channel1;
+                        channel1 = channel2;
+                        channel2 = temp;
                     }
+                    funcs.swap_channel(channel1, channel2);
+                    
                 } catch (const std::exception& e) {
                     std::cerr << e.what() << '\n';
                     return 1;
                 }
+            }
+            else {
+                std::cerr << "Invalid argument" << std::endl;
+                return 1;
             }
             break;
 
         case 6: // if 6 args it must be swap_channel, clip_channel or scale_channel
             if (argv[4] == std::string("swap_channel")){
                 try {
-                    int channel1 = std::stoi(argv[5]);
-                    int channel2 = std::stoi(argv[6]);
+                    int channel1 = argv[5][0] - '0';
+                    int channel2 = argv[5][2] - '0';
                     
                     if (channel1 < channel2){
                         int temp = channel1;
                         channel1 = channel2;
                         channel2 = temp;
                     }
-
-                    if (argv[3][0] == 'M') {
-                        // call memory swap
-                        } else {
-                        // call fast swap
-
+                    if (argv[3] == std::string("-M")) {
+                        funcs.swap_channel_memory(channel1, channel2);
+                    } else if(argv[3] == std::string("-S")) {
+                    funcs.swap_channel_speed(channel1, channel2);
+                    } else {
+                        std::cerr << "Invalid argument" << std::endl;
                     }
                     break;
                 } catch (const std::exception& e) {
@@ -75,15 +77,12 @@ int main(int argc, char *argv[]) {
                     return 1;
                 }
             } else if (argv[3] == std::string("clip_channel")) {
-                std::cout << "CLIP CHANNELooooo" << std::endl;
                 try {
-                    std::cout << "CLIP CHANNEL" << std::endl;
                     int channel = std::stoi(argv[4]);
                     bool comma = false;
                     std::string range = argv[5];
                     std::string min;
                     std::string max; 
-                    std::cout << "RANGE " << range << std::endl;
                     
                     for (int i = 1 ; i < range.length(); i++){
                         if (range[i] == ','){
@@ -97,13 +96,6 @@ int main(int argc, char *argv[]) {
                         }
                     int minimum = std::stoi(min);
                     int maximum = std::stoi(max);
-                    std::cout << "MINIMUM " << minimum << " MAXIMUM " << maximum << std::endl;
-
-                    if (minimum > maximum || minimum < 0 || maximum > 255 || channel < 0) {
-                        std::cerr << "Invalid range" << std::endl;
-                        return 1; 
-                    } // stick this all into a function
-
                     funcs.clip_channel(channel, minimum, maximum); 
                 } catch (const std::exception& e) {
                     std::cerr << e.what() << '\n';
@@ -133,7 +125,7 @@ int main(int argc, char *argv[]) {
                         if (range[i] == ','){
                             comma = true;
                         }
-                            else if (comma) {
+                            else if (!comma) {
                                 min += range[i];
                             } else {
                                 max += range[i];
@@ -141,16 +133,14 @@ int main(int argc, char *argv[]) {
                         }
                     int minimum = std::stoi(min);
                     int maximum = std::stoi(max);
+                    if (argv[3] == std::string("-M")) {
+                        funcs.clip_channel_memory(channel, minimum, maximum);
+                        } else if (argv[3] == std::string("-S")) {
+                        funcs.clip_channel_speed(channel, minimum, maximum);
 
-                    if (minimum > maximum || minimum < 0 || maximum > 255 || channel < 0) {
-                        std::cerr << "Invalid range" << std::endl;
-                        return 1; 
-                    } // stick this all into a function
-                    if (argv[3][0] == 'M') {
-                        // call memory clip
-                        } else {
-                        // call fast clip
-
+                    }
+                    else{
+                        std::cerr << "Invalid argument" << std::endl;
                     } 
                 } catch (const std::exception& e) {
                     std::cerr << e.what() << '\n';
@@ -159,10 +149,10 @@ int main(int argc, char *argv[]) {
             } else if (argv[4] == std::string("scale_channel")) {
                 int channel = std::stoi(argv[5]);
                 float scale_factor = std::stof(argv[6]);
-                if (argv[3][0] == 'M') {
-                    // call memory scale
-                    } else {
-                    // call fast scale
+                if (argv[3] == std::string("-M")) {
+                    funcs.scale_channel_memory(channel, scale_factor);
+                    } else if (argv[3] == std::string("-S")) {
+                    funcs.scale_channel_speed(channel, scale_factor);
 
                 }  
             } else {
